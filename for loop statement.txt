@@ -1,0 +1,9 @@
+ const columns = [];
+
+  if (horizontalCols > 2) {
+    for (let i = 2; i < horizontalCols; i++) {
+      columns.push("_260px");
+    }
+  }
+
+  const columnNum = columns.join("");
