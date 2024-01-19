@@ -1,0 +1,78 @@
+// QueueGroup.tsx
+import React, { useContext, useEffect, useState } from "react";
+import QueueItem, { QueueItemProps } from "./QueueItem";
+import { items } from "../../stores/queueitems";
+
+import SocketContext from "../../stores/socket";
+
+interface QueueGroupsProps {
+  numberOfItems: number;
+  componentType?: string | undefined;
+  orientation: "vertical" | "horizontal";
+  verticalRows: number;
+  horizontalCols: number;
+}
+
+interface Message {
+  group: string;
+  section: string;
+  ticket: string;
+}
+
+const QueueGroups: React.FC<QueueGroupsProps> = ({
+  numberOfItems,
+  componentType,
+  orientation = "vertical",
+  verticalRows,
+  horizontalCols,
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const { data } = useContext<any>(SocketContext);
+
+  useEffect(() => {
+    if (Array.isArray(data)) {
+      setMessages((prevMessages) => [...prevMessages, ...data]);
+    }
+  }, [data]);
+
+  // Update itemsToDisplay based on the counter
+  const itemsToDisplay: QueueItemProps[] = Array.from(
+    { length: numberOfItems },
+    (_, index) => ({
+      data: items[index] || { subtitle: "" },
+      counter: index + 1,
+    })
+  );
+
+  return (
+    <div id={componentType} className="p-5 flex flex-col gap-10">
+      <div
+        style={{
+          display: "grid",
+          gap: "10px",
+          gridTemplateColumns:
+            orientation === "vertical"
+              ? `repeat(${verticalRows}, 1fr)`
+              : undefined,
+          gridTemplateRows:
+            orientation === "horizontal"
+              ? `repeat(${horizontalCols}, 1fr)`
+              : undefined,
+          gridAutoFlow: orientation === "horizontal" ? "column" : undefined,
+        }}
+      >
+        {itemsToDisplay.map((item, index) => (
+          <QueueItem
+            key={index + 1}
+            {...item}
+            // Check if the current item's counter matches the data counter
+            queueSection={item.counter === 1 ? data?.section || "" : ""}
+            queueTicket={item.counter === 1 ? data?.ticket || "" : ""}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default QueueGroups;
