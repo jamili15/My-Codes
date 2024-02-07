@@ -1,0 +1,83 @@
+//make a folder name it Hooks. Then make a file name it useShrunk
+
+import { useState } from "react";
+
+export const useShrink = (additionalClassNames?: string) => {
+  const [isShrunk, setShrunk] = useState(false);
+
+  const handleShrink = () => {
+    setShrunk(!isShrunk);
+
+    setTimeout(() => {
+      setShrunk(false);
+    }, 300);
+  };
+
+  // Combine the base class names with any additional class names provided
+  const classNames = `transform ${
+    isShrunk ? "scale-75" : ""
+  } transition-transform duration-300 ease-in-out ${"px-20 py-y text-2xl"} ${additionalClassNames}`;
+
+  return { isShrunk, handleShrink, classNames };
+};
+
+
+// Button.tsx
+import React from "react";
+import Link from "next/link";
+import { useShrink } from "@/hooks/useShrunk";
+
+interface ButtonProps {
+  text?: string;
+  onClick?: () => void;
+  href?: string;
+  className?: string;
+  children?: React.ReactNode;
+  display?: string;
+  value?: string;
+  variant?: "normal" | "shrink"; // Define variant prop
+}
+
+const Button: React.FC<ButtonProps> = ({
+  text,
+  onClick,
+  href,
+  className,
+  children,
+  display,
+  value,
+  variant = "normal", // Default to "normal" if not provided
+}) => {
+  const { isShrunk, handleShrink, classNames } = useShrink();
+
+  if (href) {
+    return (
+      <Link href={href} passHref>
+        <a
+          className={`text-2xl px-20 py-4 rounded-xl border border-gray-400 uppercase ${display} ${className}`}
+        >
+          {text}
+        </a>
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      className={`text-2xl px-20 py-4 rounded-xl border border-gray-400 uppercase ${className} ${display} ${
+        variant === "shrink" ? classNames : ""
+      }`}
+      onClick={() => {
+        onClick && onClick();
+        handleShrink();
+      }}
+    >
+      {text}
+      {children}
+    </button>
+  );
+};
+
+export default Button;
+
+
