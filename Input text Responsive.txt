@@ -4,9 +4,12 @@ import React, {
   useState,
   InputHTMLAttributes,
   ChangeEventHandler,
+  FocusEventHandler,
+  useEffect,
 } from "react";
+import { useKeyboardContext } from "../keyboard/KeyboardContext";
 
-interface MergedInputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   className?: string;
   placeholder?: string;
@@ -27,7 +30,7 @@ interface MergedInputProps extends InputHTMLAttributes<HTMLInputElement> {
   onChange?: ChangeEventHandler<HTMLInputElement>;
 }
 
-const MergedInput: React.FC<MergedInputProps> = ({
+const Input: React.FC<InputProps> = ({
   label,
   className,
   labelLayout,
@@ -39,23 +42,49 @@ const MergedInput: React.FC<MergedInputProps> = ({
   onChange,
   ...props
 }) => {
+  const context = useKeyboardContext();
   const inputRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
+  const [hasValue, setHasValue] = useState(!!value);
+
+  function focusHandler() {
+    if (inputRef.current) {
+      context.setActiveInput(inputRef);
+    }
+  }
+
+  const handleFocus: FocusEventHandler<HTMLInputElement> = () => {
+    setFocused(true);
+  };
+
+  const handleBlur: FocusEventHandler<HTMLInputElement> = () => {
+    setFocused(false);
+  };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
+    setHasValue(!!value);
+
     if (onChange) {
       onChange(event); // Pass the entire event object
     }
   };
 
+  useEffect(() => {
+    // Update hasValue when the value prop changes
+    setHasValue(!!value);
+  }, [value]);
+
   return (
     <div className="relative">
       <label
-        className={`absolute left-2 px-[5px] transition-transform ${labelLayout} ${
-          (focused || value) && !props.readOnly
+        htmlFor={type}
+        className={`absolute left-2 px-1 transition-transform ${labelLayout} ${
+          (focused || hasValue) && !props.readOnly
             ? `text-blue-500 -translate-y-3 ${translationUp} bg-white rounded !m-0`
-            : `text-gray-500 translate-y-2 ${translationDown}`
+            : `text-gray-500 translate-y-2 ${
+                hasValue ? "-translate-y-3" : ""
+              } ${translationDown}`
         }`}
       >
         {label}
@@ -64,14 +93,18 @@ const MergedInput: React.FC<MergedInputProps> = ({
         type={type}
         id={type}
         placeholder={placeholder}
-        className={`w-full px-4 py-2 focus:outline-none rounded border ${
+        className={`w-full bg-transparent px-4 py-2 focus:outline-none rounded ${
           focused ? "focus:border-blue-500" : "focus:border-primary"
         } ${className}`}
         ref={inputRef}
-        onFocus={() => {
-          setFocused(true);
+        onFocus={(e) => {
+          focusHandler();
+          handleFocus(e);
         }}
-        onBlur={() => setFocused(true)}
+        onBlur={(e) => {
+          handleBlur(e);
+        }}
+        onClick={(e) => e.stopPropagation()}
         onChange={handleChange}
         value={value}
         {...props}
@@ -80,4 +113,4 @@ const MergedInput: React.FC<MergedInputProps> = ({
   );
 };
 
-export default MergedInput;
+export default Input;

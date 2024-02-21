@@ -1,25 +1,24 @@
 // components/QRCodeGenerator.tsx
-import React, { ReactNode, useState, useEffect } from "react";
+import { useState } from "react";
 import QRCode from "qrcode.react";
 
-interface QRCodeGeneratorProps {
-  children?: ReactNode;
-}
+const QRCodeGenerator: React.FC = () => {
+  const [text, setText] = useState("");
 
-const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ children }) => {
-  const [content, setContent] = useState<ReactNode>("");
-
-  useEffect(() => {
-    // Update content when children change
-    setContent(React.Children.toArray(children).join(""));
-  }, [children]);
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setText(event.target.value);
+  };
 
   return (
     <div>
-      <p>Content for QR code:</p>
-
-      {content && <QRCode value={content} />}
-      {content}
+      <h2>QR Code Generator</h2>
+      <input
+        type="text"
+        placeholder="Enter text for QR code"
+        value={text}
+        onChange={handleTextChange}
+      />
+      {text && <QRCode value={text} />}
     </div>
   );
 };
