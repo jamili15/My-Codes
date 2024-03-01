@@ -4,8 +4,6 @@ import React, {
   useState,
   InputHTMLAttributes,
   ChangeEventHandler,
-  FocusEventHandler,
-  useEffect,
 } from "react";
 import { useKeyboardContext } from "../keyboard/KeyboardContext";
 
@@ -14,6 +12,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   className?: string;
   placeholder?: string;
   labelLayout?: string;
+  labelText?: string;
+  labelColor?: string;
   translationUp?: string;
   translationDown?: string;
   type?:
@@ -30,10 +30,17 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   onChange?: ChangeEventHandler<HTMLInputElement>;
 }
 
+interface InputState {
+  value: string | number | readonly string[];
+  focused: boolean;
+}
+
 const Input: React.FC<InputProps> = ({
   label,
   className,
   labelLayout,
+  labelColor,
+  labelText,
   translationUp,
   translationDown,
   placeholder,
@@ -44,47 +51,26 @@ const Input: React.FC<InputProps> = ({
 }) => {
   const context = useKeyboardContext();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [focused, setFocused] = useState(false);
-  const [hasValue, setHasValue] = useState(!!value);
-
-  function focusHandler() {
-    if (inputRef.current) {
-      context.setActiveInput(inputRef);
-    }
-  }
-
-  const handleFocus: FocusEventHandler<HTMLInputElement> = () => {
-    setFocused(true);
-  };
-
-  const handleBlur: FocusEventHandler<HTMLInputElement> = () => {
-    setFocused(false);
-  };
+  const [inputState, setInputState] = useState<InputState>({
+    value: value || "",
+    focused: false,
+  });
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
-    setHasValue(!!value);
-
+    setInputState((prev) => ({ ...prev, value }));
     if (onChange) {
-      onChange(event); // Pass the entire event object
+      onChange(event);
     }
   };
-
-  useEffect(() => {
-    // Update hasValue when the value prop changes
-    setHasValue(!!value);
-  }, [value]);
 
   return (
     <div className="relative">
       <label
-        htmlFor={type}
-        className={`absolute left-2 px-1 transition-transform ${labelLayout} ${
-          (focused || hasValue) && !props.readOnly
-            ? `text-blue-500 -translate-y-3 ${translationUp} bg-white rounded !m-0`
-            : `text-gray-500 translate-y-2 ${
-                hasValue ? "-translate-y-3" : ""
-              } ${translationDown}`
+        className={`absolute left-2 px-[5px] transition-transform ${labelLayout} ${
+          (inputState.focused || inputState.value) && !props.readOnly
+            ? `text-blue-500 ${labelColor} ${labelText} -translate-y-3 ${translationUp} bg-white rounded !m-0`
+            : `text-gray-500 translate-y-2 z-[-1] ${translationDown}`
         }`}
       >
         {label}
@@ -92,21 +78,16 @@ const Input: React.FC<InputProps> = ({
       <input
         type={type}
         id={type}
-        placeholder={placeholder}
+        placeholder={inputState.focused || inputState.value ? "" : placeholder}
         className={`w-full bg-transparent px-4 py-2 focus:outline-none rounded ${
-          focused ? "focus:border-blue-500" : "focus:border-primary"
+          inputState.focused ? "focus:border-blue-500" : "focus:border-primary"
         } ${className}`}
         ref={inputRef}
-        onFocus={(e) => {
-          focusHandler();
-          handleFocus(e);
-        }}
-        onBlur={(e) => {
-          handleBlur(e);
-        }}
+        onFocus={() => setInputState((prev) => ({ ...prev, focused: true }))}
+        onBlur={() => setInputState((prev) => ({ ...prev, focused: false }))}
         onClick={(e) => e.stopPropagation()}
         onChange={handleChange}
-        value={value}
+        value={inputState.value}
         {...props}
       />
     </div>

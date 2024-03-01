@@ -4,7 +4,7 @@ import QRCodeGenerator from "../components/QRCodeGenerator";
 const Home: React.FC = () => {
   return (
     <div>
-      <h1>QR Code Generator App</h1>
+      <h1 className="">QR Code Generator App</h1>
       <QRCodeGenerator />
     </div>
   );
